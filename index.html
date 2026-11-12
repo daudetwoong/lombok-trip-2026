@@ -129,6 +129,12 @@
   .band li::before{content:"";position:absolute;left:1px;top:7px;width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.35}
   .band li b{color:var(--deep)}
   .band .fine{margin-top:4px;font-size:10.6px}
+  /* 맨 위 바로 가기 칩 줄(한 장 요약이라 붙지 않음) */
+  .jump{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:10px 0 2px;padding:2px 0}
+  .jump::-webkit-scrollbar{display:none}
+  .jump button,.jump a{flex:0 0 auto;display:inline-flex;align-items:center;min-height:36px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:0 12px;font:inherit;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;white-space:nowrap;text-decoration:none}
+  .jump a{background:var(--deep);border-color:var(--deep);color:#fff}
+  #route,#stay,#days,#jkt,#flight,#cost{scroll-margin-top:10px}
   .foot{display:flex;justify-content:space-between;align-items:center;gap:8px 14px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:var(--deep);border-radius:13px;color:#e8f0f2;font-size:11.8px}
   .foot a{color:#fff;font-weight:800;font-size:13px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.5)}
 
@@ -161,7 +167,11 @@
   <div class="stops"><b>① 꾸따<small>4박</small></b><i>›</i><b>② 길리 T<small>3박</small></b><i>›</i><b>③ 셍기기<small>1박</small></b></div>
 </header>
 
-<h2>🗺️ 동선 한눈에 <small>공항 → ① → ② → ③ → 공항</small></h2>
+<nav class="jump" id="jump" aria-label="바로 가기">
+  <button type="button" data-go="route">🗺️ 동선 지도</button><button type="button" data-go="stay">🏝️ 머무는 곳·숙소</button><button type="button" data-go="days">📅 날짜별</button><button type="button" data-go="jkt">🌃 자카르타 하룻밤</button><button type="button" data-go="flight">✈️ 비행</button><button type="button" data-go="cost">💰 값</button><a href="plan.html">자세한 일정 →</a>
+</nav>
+
+<h2 id="route">🗺️ 동선 한눈에 <small>공항 → ① → ② → ③ → 공항</small></h2>
 <section class="route">
   <div id="map" role="img" aria-label="롬복 동선 지도"></div>
   <div class="box segs">
@@ -174,7 +184,7 @@
   </div>
 </section>
 
-<h2>🏝️ 머무는 세 곳</h2>
+<h2 id="stay">🏝️ 머무는 세 곳</h2>
 <section class="cards">
 <article class="card" data-area="kuta4"><div class="hd" style="background:var(--kta)"><b>① 꾸따 · 4박 · 11/25~28</b><span>서핑 마을, 남쪽 해변</span></div><div class="bd"><h3>할 것</h3><ul><li>셀롱 블라낙 첫 서핑 <span class="rv" data-n="Selong Belanak Beach">4.5/5,485</span></li><li>그루뿍 배 서핑 레슨 <span class="op"><a href="https://www.google.com/maps/search/?api=1&amp;query=Insider%20Surf%20%7C%20Gerupuk%20-%20Lombok%20Kuta%20Lombok&amp;query_place_id=ChIJuTszBW0BzS0Re0yL_B5t32s" target="_blank" rel="noopener">Insider Surf</a> <span class="rv" data-n="Insider Surf | Gerupuk - Lombok">5.0/315</span> · <a href="https://www.google.com/maps/search/?api=1&amp;query=Turmuzi%20Surf%20Gerupuk%20-%20Lombok%20Surf%20Lessons%20Kuta%20Lombok&amp;query_place_id=ChIJg97ZwAwBzS0R7ASCG3azvv0" target="_blank" rel="noopener">Turmuzi</a> <span class="rv" data-n="Turmuzi Surf Gerupuk - Lombok Surf Lessons">5.0/274</span></span></li><li>메레세 언덕 해넘이 <span class="rv" data-n="Bukit Merese">4.7/9,065</span></li><li>핑크비치 배 하루 <span class="op"><a href="https://www.google.com/maps/search/?api=1&amp;query=Open%20trip%20pink%20beach%20and%20senorkling%20trip%20Kuta%20Lombok&amp;query_place_id=ChIJ9VcWi5pRzC0R2nNu2TGc0DE" target="_blank" rel="noopener">배 투어</a> <span class="rv" data-n="Open trip pink beach and senorkling trip">4.6/149</span></span> 또는 스코통 3섬 <span class="op"><a href="https://www.google.com/maps/search/?api=1&amp;query=Gili%20Kedis%20Kuta%20Lombok&amp;query_place_id=ChIJRW-bU_WXzS0Ryz4_g4S6vmE" target="_blank" rel="noopener">Gili Kedis</a> <span class="rv" data-n="Gili Kedis">4.7/285</span></span></li></ul><h3>숙소</h3><div class="stay" data-stay="kuta4" data-name="The Nest Villa" data-ppn="27165"><div class="nm"><span class="tier">알뜰</span><a href="https://www.airbnb.com/rooms/1441692691182372564" target="_blank" rel="noopener">The Nest Villa</a><small>에어비앤비 4.97 · 후기 33</small></div><div class="pr">27,165원<small>1인 1박</small></div></div><div class="stay" data-stay="kuta4" data-name="Premium 3 Bedroom Villa Private Pool" data-ppn="43574"><div class="nm"><span class="tier mid">보통</span><a href="https://www.airbnb.com/rooms/1472857700604170954" target="_blank" rel="noopener">Premium 3 Bedroom Villa Private Pool</a><small>에어비앤비 4.94 · 후기 34</small></div><div class="pr">43,574원<small>1인 1박</small></div></div><h3>먹고 마실 곳</h3><ul><li><a href="https://www.google.com/maps/search/?api=1&amp;query=Pawon%20Nusantara%20Kuta%20Lombok%20Kuta%20Lombok&amp;query_place_id=ChIJSYtKseepzS0Rnab5Sf9V4x4" target="_blank" rel="noopener">Pawon Nusantara</a> <span class="rv" data-n="Pawon Nusantara Kuta Lombok">4.9/1,960</span> <span class="op">인도네시아 밥</span></li><li><a href="https://www.google.com/maps/search/?api=1&amp;query=Cantina%20Mexicana%20Kuta%20Lombok%20Kuta%20Lombok&amp;query_place_id=ChIJd-2KmUipzS0RON9tQzCIvnY" target="_blank" rel="noopener">Cantina Mexicana</a> <span class="rv" data-n="Cantina Mexicana Kuta Lombok">4.8/5,277</span> <span class="op">저녁·맥주</span></li><li><a href="https://www.google.com/maps/search/?api=1&amp;query=PULO%20ALL%20DAY%20CAFE%20%26%20BAR%20Kuta%20Lombok&amp;query_place_id=ChIJbZ2fcQCpzS0RMvb7uzGh-EQ" target="_blank" rel="noopener">PULO</a> <span class="rv" data-n="PULO ALL DAY CAFE &amp; BAR">5.0/1,533</span> <span class="op">바</span></li></ul></div></article>
 <article class="card" data-area="gilit3"><div class="hd" style="background:var(--gili)"><b>② 길리 T · 3박 · 11/29~12/1</b><span>차 없는 섬, 거북이 바다, 밤</span></div><div class="bd"><h3>할 것</h3><ul><li>3섬 거북이 스노클 배 <span class="op"><a href="https://www.google.com/maps/search/?api=1&amp;query=GILINESIA%20PRIVATE%20SNORKELING%20BOAT%20Gili%20Trawangan&amp;query_place_id=ChIJO68prLTdzS0ReTwFk6GCV9o" target="_blank" rel="noopener">GILINESIA</a> <span class="rv" data-n="GILINESIA PRIVATE SNORKELING BOAT">5.0/436</span></span></li><li>자전거 섬 한 바퀴와 해넘이 <span class="op"><a href="https://www.google.com/maps/search/?api=1&amp;query=Casa%20Vintage%20Beach%20Gili%20Trawangan&amp;query_place_id=ChIJbeZVC1LnzS0R1krNUcrSYuU" target="_blank" rel="noopener">Casa Vintage Beach</a> <span class="rv" data-n="Casa Vintage Beach">4.6/1,571</span></span></li><li>길리 에어 당일 프리다이빙 체험 <span class="op"><a href="https://www.google.com/maps?cid=7786634798161086654" target="_blank" rel="noopener">Gili Air Divers</a> <span class="rv" data-n="Gili Air Divers - Freedive Gili Air">5.0/952</span></span></li><li>라이브 바 <span class="op"><a href="https://www.google.com/maps/search/?api=1&amp;query=Sama-Sama%20Reggae%20Bar%20Gili%20Trawangan&amp;query_place_id=ChIJZ_2fFP_dzS0Rt9dGU0GamCM" target="_blank" rel="noopener">Sama-Sama</a> <span class="rv" data-n="Sama-Sama Reggae Bar">4.5/2,716</span></span></li></ul><h3>숙소</h3><div class="stay" data-stay="gilit3" data-name="Villa Maya" data-ppn="20490"><div class="nm"><span class="tier">알뜰</span><a href="https://www.airbnb.com/rooms/805389451686694646" target="_blank" rel="noopener">Villa Maya</a><small>에어비앤비 4.83 · 후기 189</small></div><div class="pr">20,490원<small>1인 1박</small></div></div><div class="stay" data-stay="gilit3" data-name="Executive 3 Bedroom Villa" data-ppn="62522"><div class="nm"><span class="tier mid">보통</span><a href="https://www.airbnb.com/rooms/31962730" target="_blank" rel="noopener">Executive 3 Bedroom Villa</a><small>에어비앤비 4.87 · 후기 175</small></div><div class="pr">62,522원<small>1인 1박</small></div></div><h3>먹고 마실 곳</h3><ul><li><a href="https://www.google.com/maps/search/?api=1&amp;query=Jali%20Kitchen%20Gili%20Trawangan&amp;query_place_id=ChIJgf7LiKngzS0RYM8rz0gXmoA" target="_blank" rel="noopener">Jali Kitchen</a> <span class="rv" data-n="Jali Kitchen">4.6/3,169</span> <span class="op">점심</span></li><li><a href="https://www.google.com/maps/search/?api=1&amp;query=Jiggy%20Beach%20Club%20Gili%20Trawangan&amp;query_place_id=ChIJVUVMcwDfzS0RlPvIYbRXV_Y" target="_blank" rel="noopener">Jiggy Beach Club</a> <span class="rv" data-n="Jiggy Beach Club">4.9/8,331</span> <span class="op">해변 점심</span></li><li><a href="https://www.google.com/maps/search/?api=1&amp;query=The%20Shack%20Restaurant%20and%20Bar%20-%20Gili%20Trawangan%20Gili%20Trawangan&amp;query_place_id=ChIJP-NkdmDhzS0R7bjoJNB2DgU" target="_blank" rel="noopener">The Shack</a> <span class="rv" data-n="The Shack Restaurant and Bar - Gili Trawangan">4.9/2,686</span> <span class="op">저녁·바</span></li></ul></div></article>
@@ -182,7 +192,7 @@
 </section>
 <div class="fine">숙소 값은 11/10 밤 검색한 실제 값(4명이 나눈 1인 1박), 예약 때 다시 확인 · ★ 구글 별점/후기 수</div>
 
-<h2>📅 날짜별 한 줄</h2>
+<h2 id="days">📅 날짜별 한 줄</h2>
 <section class="box days">
 <div class="dr"><div class="d"><i style="background:var(--fly)"></i>11/24<small>화</small></div><div>인천 15:40 → 자카르타 21:00 (OZ761, 3명) · 공항 호텔 1박</div></div>
 <div class="dr"><div class="d"><i style="background:var(--kta)"></i>11/25<small>수</small></div><div>자카르타 07:30 → 롬복 10:30 (GA432) · 꾸따 도착 · 오후 셀롱 블라낙 첫 파도<span class="s">대한항공 1명은 인천 09:35 → 자카르타 14:50 (KE437), 자카르타 1박</span></div></div>
@@ -197,7 +207,7 @@
 <div class="dr"><div class="d"><i style="background:var(--fly)"></i>12/4<small>금</small></div><div>인천 도착 (OZ762 07:40 · KE438 새벽 03:50)</div></div>
 </section>
 
-<section class="band" style="margin-top:12px">
+<section class="band" id="jkt" style="margin-top:12px">
 <div class="box bx"><h2>🌃 11/24 자카르타 하룻밤 <small>선택</small></h2><ul>
 <li><b>쉼</b> · 공항 터미널 3 호텔 <a href="https://www.google.com/maps/search/?api=1&amp;query=Grand%20Anara%20Airport%20Hotel%20Soekarno-Hatta%20Airport%20Tangerang&amp;query_place_id=ChIJL93Lhr8Dai4R-D_fyfF7-m4" target="_blank" rel="noopener">Grand Anara</a> <span data-hotel="Grand Anara Airport Hotel" data-krw="252103">★4.7(약 25만 원)</span> 침대 4 / <a href="https://www.google.com/maps/search/?api=1&amp;query=Anara%20Airport%20Hotel%20Soekarno-Hatta%20Airport%20Tangerang&amp;query_place_id=ChIJz3deLg0Dai4RNv78dF-Udlo" target="_blank" rel="noopener">Anara</a> <span data-hotel="Anara Airport Hotel" data-krw="489090">★4.7(약 49만 원)</span> 침대 2(3번째 침대 미확인) · 11/24 1박 3명</li>
 <li><b>한 잔</b> · PIK 차 14~20분 · <a href="https://www.google.com/maps/search/?api=1&amp;query=PoBa%20Bar%20Pantai%20Indah%20Kapuk%20Jakarta&amp;query_place_id=ChIJVdia_AAdai4Rh5jRfMbnHp4" target="_blank" rel="noopener">PoBa Bar</a> <span class="rv" data-n="PoBa Bar">4.9/963</span> 새벽 4:00 · <a href="https://www.google.com/maps/search/?api=1&amp;query=Black%20Owl%20-%20Pantai%20Indah%20Kapuk%20Pantai%20Indah%20Kapuk%20Jakarta&amp;query_place_id=ChIJYy-J190cai4RhKcLoZOQ5_M" target="_blank" rel="noopener">Black Owl</a> <span class="rv" data-n="Black Owl - Pantai Indah Kapuk">4.8/3,416</span> 새벽 3:00</li>
@@ -212,7 +222,7 @@
 </section>
 
 <section class="row2" style="margin-top:12px">
-  <div class="box fl">
+  <div class="box fl" id="flight">
     <h2 style="margin:0 0 5px">✈️ 비행 <small>시각은 현지 시각</small></h2>
 <table><thead><tr><th>날짜</th><th>편</th><th>구간</th><th>시각</th><th></th></tr></thead><tbody>
 <tr><td colspan="5" style="font-weight:800;color:var(--sea);font-size:11.5px;padding-top:4px">가는 편</td></tr>
@@ -225,7 +235,7 @@
 <tr data-flt="KE438" data-date="2026-12-03" data-dep="18:30" data-arr="03:50"><td>12/3</td><td class="no">KE438</td><td>자카르타 → 인천</td><td class="t">18:30 → 03:50 <small>다음 날</small></td><td><small>1명</small></td></tr>
 </tbody></table>
   </div>
-  <div class="side">
+  <div class="side" id="cost">
 <div class="cost"><h2 style="margin:0 0 3px">💰 값</h2><div class="big" id="costpp">1인 약 46만 ~ 69만 원 <small>(숙소·차·배·놀이. 국제선·식비 제외, 추정 포함)</small></div><div class="sm" data-dom="83.73">국내선 직원표 왕복 <b>83.73달러</b> (GA432 43.60 + GA431 40.13, 1인)</div><div class="fl seatn" style="padding-left:0;padding-right:0;padding-bottom:0"><div class="note" style="margin-top:0">💺 직원표로 탈 수 있는 편만. 자카르타 ↔ 롬복은 가루다뿐. 사이트에 나온 편은 모두 일반석 9석 이상(11/11 읽음)</div><div class="note2">예비 GA430 11:00 → 14:00 · GA433 14:45 → 15:50<br>가루다 국제선 백업 GA879 10:35 → 16:00 · GA878 23:30 → 다음 날 08:30</div></div></div>
     <div class="box know">
       <h2 style="margin:0 0 4px">📌 알아 둘 것</h2>
@@ -276,6 +286,10 @@ var MAPD={"main": [["apt", [-8.7573, 116.2767], "✈", "롬복 공항", "var(--f
   fit(); window.addEventListener('resize',fit);
 })();
 
+// 맨 위 바로 가기: 누르면 팜플렛 안의 그 상자로, 주소 끝 #이름으로 열어도 그 상자로
+function go(id,smooth){var el=document.getElementById(id);if(!el)return false;el.scrollIntoView({behavior:smooth?'smooth':'auto',block:'start'});return true;}
+document.getElementById('jump').addEventListener('click',function(e){var b=e.target.closest('[data-go]');if(!b)return;go(b.dataset.go,true);try{history.replaceState(null,'','#'+b.dataset.go);}catch(x){}});
+if(location.hash.length>1)go(decodeURIComponent(location.hash.slice(1)),false);
 </script>
 </body>
 </html>
