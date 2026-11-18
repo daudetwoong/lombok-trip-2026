@@ -1,0 +1,281 @@
+<!-- 꾸따 숙소 비교 보고서(형님 후보 6곳 + 새로 찾은 곳, 1~4위·별점·걷는 거리·지도) — tools/build_17.py → report/build_stays.py로 만듦 -->
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>꾸따 숙소 고르기</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{--ink:#33312e;--paper:#fbf7ef;--card:#fff;--line:#e6ddcc;--accent:#c96f3f;--sea:#3d7a8c;--ok:#5f8a4f;--warn:#b5651d;--mute:#7d766b;--gold:#e0a028;--blue:#2f6fd6}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;font-size:14.5px}
+.wrap{max-width:780px;margin:0 auto;padding:18px 16px 70px}
+a{color:var(--sea)}
+.back{font-size:13px;display:inline-block;margin-bottom:8px}
+h1{font-size:24px;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--mute);font-size:13px;margin:0 0 14px}
+h2{font-size:18px;margin:30px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line);text-wrap:balance}
+h2 small{font-weight:400;color:var(--mute);font-size:12.5px;margin-left:6px}
+.bar{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:12px 14px;font-size:14px}
+.bar p{margin:0 0 6px} .bar p:last-child{margin:0}
+.choose{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.choose a{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-decoration:none;color:var(--ink);font-size:13px;min-width:0}
+.choose a b{display:block;color:var(--accent);font-size:14px}
+@media (max-width:520px){.choose{grid-template-columns:1fr}}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 14px}
+details.card summary{list-style:none;cursor:pointer} details.card summary::-webkit-details-marker{display:none}
+details.card summary::after{content:"눌러서 자세히 ▾";display:block;font-size:12px;color:var(--sea);margin-top:6px}
+details.card[open] summary::after{content:"접기 ▴"}
+.hd{display:flex;gap:10px;align-items:flex-start}
+.rk{flex:0 0 34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center}
+#rest .rk{background:#9a9286}
+.nm{flex:1;min-width:0} .nm h3{margin:0;font-size:17px;line-height:1.35} .nm p{margin:2px 0 0;font-size:12.5px;color:var(--mute)}
+.you,.new{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:0 6px;margin-left:2px;white-space:nowrap}
+.you{background:#efe6d6;color:#7a5a2c} .new{background:#e2efe0;color:var(--ok)}
+.ov{flex:0 0 auto;text-align:right} .ov b{display:block;font-size:20px;line-height:1.1}
+.st{position:relative;display:inline-block;color:#ddd3c2;letter-spacing:1px;font-size:13px;line-height:1;white-space:nowrap}
+.st.big{font-size:16px}
+.st-f{position:absolute;left:0;top:0;overflow:hidden;color:var(--gold);white-space:nowrap}
+.price{margin:12px 0 8px;padding:10px 12px;background:#faf4ea;border-radius:10px}
+.price b{display:block;font-size:19px;color:var(--accent)} .price span{font-size:13px;color:var(--mute)}
+.alt{font-size:12.5px;margin-top:3px;color:var(--ink)}
+.subst{list-style:none;padding:0;margin:0 0 10px;display:grid;gap:3px}
+.subst li{display:grid;grid-template-columns:84px auto 30px minmax(0,1fr);gap:6px;align-items:center;font-size:12.5px}
+.subst .st{justify-self:start} .subst .k{color:var(--mute)} .subst .v{font-variant-numeric:tabular-nums;font-weight:700} .subst .why{color:var(--mute);min-width:0}
+@media (max-width:520px){.subst li{grid-template-columns:78px auto 26px} .subst .why{grid-column:1/-1;padding-left:84px;margin-top:-4px;font-size:11.5px}}
+.facts{display:grid;gap:3px;font-size:13px;margin-bottom:10px}
+.facts span{display:inline-block;min-width:52px;color:var(--mute);font-size:12px}
+.pc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.pc{grid-template-columns:1fr}}
+.pc h4{margin:0 0 3px;font-size:13px} .pro h4{color:var(--ok)} .con h4{color:var(--warn)}
+.pc ul{margin:0;padding-left:18px;font-size:13px} .pc li{margin-bottom:2px}
+.note{font-size:12.5px;color:var(--mute);margin:8px 0 0}
+.pick{margin-top:8px;font-size:13px;font-weight:700;color:var(--sea)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btns a{flex:1 1 150px;text-align:center;text-decoration:none;font-weight:700;font-size:13.5px;border-radius:10px;padding:9px 8px}
+.b1{background:var(--ink);color:#fff} .b2{background:var(--card);color:var(--sea);border:1px solid var(--sea)}
+.adr{font-size:12px;color:var(--mute);margin:6px 0 0;overflow-wrap:anywhere}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;background:var(--card);font-size:12.5px;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:6px 7px;text-align:left;vertical-align:top}
+th{background:#f3eee3;font-weight:700;white-space:nowrap} th small{font-weight:400;color:var(--mute)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.me td{background:#fbf3e6}
+.walk td.g{background:#e3f0dc;font-weight:700} .walk td.r{background:#f7e1d5}
+.walk td:first-child{white-space:nowrap}
+#map{height:430px;border-radius:14px;border:1px solid var(--line);background:#e9eef2}
+.pin{border:2px solid #fff;border-radius:50%;color:#fff;width:26px;height:26px;line-height:22px;text-align:center;font-weight:800;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.45)}
+.spot{width:12px;height:12px;border-radius:50%;background:var(--sea);border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mute);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+.small{font-size:12.5px;color:var(--mute)}
+ul.plain{padding-left:18px;font-size:13.5px} ul.plain li{margin-bottom:4px}
+.todo{background:#fff8e8;border:1px solid #efd9a8;border-radius:12px;padding:10px 14px;font-size:13.5px}
+.todo ol{margin:4px 0 0;padding-left:20px}
+</style></head><body><div class="wrap">
+<a class="back" href="plan.html#stay">← 롬복 계획(숙소 칸)으로</a>
+<h1>꾸따 숙소 고르기</h1>
+<p class="sub">11/25(수) 들어가 11/29(일) 나옴 · 4박 · 남자 4명 · 값은 11/19 새벽 0시 반쯤(한국 시각) 사이트에서 읽은 값(세금·수수료 포함, 날마다 바뀌어요)</p>
+
+<div class="bar">
+<p><b>결론부터 말하면 1위는 El Tropico예요.</b> 번화가 큰길 바로 옆이고, 일정에 있는 저녁 가게·바 대부분이 걸어서 4분 안이에요. 트윈 2실 4박 55만 원(아침·무료 취소 넣으면 67만 원)이에요.</p>
+<p>다만 El Tropico·Rascals의 트윈은 "가능하면" 주는 조건이라 보장이 아니에요. 1~4위 중에서 처음부터 트윈 방으로 파는 곳은 2위 Sima와 3위 Sikara예요.</p>
+<p>2~5위는 점수 차이가 0.15점뿐이라 거의 비슷해요(2위 Sima와 3위 Sikara는 0.07점 차이). 아래처럼 무엇을 더 중요하게 보는지로 고르시면 돼요. 형님이 보신 Rascals는 4위와 0.03점 차이로 5위예요.</p>
+<p class="small">기준은 형님 말씀 그대로예요. 각자 침대 4개, 화장실 2개 이상, 수영장, 먹고 노는 번화가까지 걸어서 가는 곳이에요. 호텔은 트윈 방 2개로 쟀어요. 형님 에어비앤비 4곳은 8~11위예요(이유는 아래 카드에 있어요).</p>
+<div class="choose"><a href="#s-eltropico"><b>1위 El Tropico Boutique Hotel ★4.48</b>번화가·값이 먼저라면</a><a href="#s-sima"><b>2위 Sima Hotel Kuta Lombok ★4.20</b>번화가 바로 옆 + 확실한 트윈 + 아침 포함이 먼저라면</a><a href="#s-sikara"><b>3위 Sikara Lombok Hotel ★4.13</b>확실한 트윈 + 좋은 후기가 먼저라면</a><a href="#s-mannys"><b>4위 Manny&#x27;s Resort 3침실 빌라 ★4.08</b>우리끼리 빌라·전용 수영장이 먼저라면</a><a href="#s-rascals"><b>5위 Rascals Hotel ★4.05</b>후기·아침·스파가 먼저라면</a></div>
+</div>
+
+<h2>추천 1~4위 <small>별점은 5점 만점</small></h2>
+<article class="card" id="s-eltropico"><div class="hd"><span class="rk">1</span><div class="nm"><h3>El Tropico Boutique Hotel</h3><p>번화가 한가운데, 오늘 할인으로 싼 편 · 호텔 트윈 2실 <span class="new">새로 찾은 곳</span></p></div><div class="ov"><span class="st big" aria-label="별 4.475점"><span class="st-f" style="width:89%">★★★★★</span>★★★★★</span><b>4.48</b></div></div>
+  <div class="price"><b>1인 1박 34,435원</b><span>4박 합계 550,952원 · 방만, 환불 안 됨(30% 할인)</span><div class="alt">또는 아침 포함 + 11/20 전 무료 취소: 4박 673,386원 (1인 1박 42,087원)</div></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 5점"><span class="st-f" style="width:100%">★★★★★</span>★★★★★</span><span class="v">5</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 4.3분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">트윈 2실(트윈 보장은 아님)</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">부킹 9.1·2,299개, 구글 4.8·1,063개</span></li><li><span class="k">값</span><span class="st" aria-label="별 5점"><span class="st-f" style="width:100%">★★★★★</span>★★★★★</span><span class="v">5</span><span class="why">1인 1박 34,435원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">모스크·바깥 욕실 불만</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>방 2개 × 싱글 침대 2개(트윈, 보장 아님) = 침대 4</div><div><span>화장실</span>2(방마다 1)</div>
+    <div><span>수영장</span>함께 쓰는 수영장 3개(옥상 수영장 포함)</div><div><span>점수</span>부킹 9.1 · 구글 4.8(후기 1,063개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 4.3분 · 10분 안에 닿는 곳 8/10 · 해변까지 666m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>번화가 큰길에서 27m, 일정 속 저녁 가게·바 4곳(Cantina·Ramen Otaku·KRNK·PULO)이 걸어서 4분 안(Bus Bar 7분·Elamu 11분)</li><li>오늘 30% 할인으로 호텔 트윈 중 싼 편</li><li>부킹 후기 2,299개·구글 후기 1,063개로 믿을 만함</li><li>수영장 3개</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>트윈 침대는 &quot;가능하면&quot; 주는 조건이라 꼭 된다는 보장이 없음(예약 뒤 호텔에 트윈 확인 메시지 필요)</li><li>이 방은 남은 방이 2개뿐(한 방만 팔려도 2실을 못 잡음)</li><li>아침 모스크 소리·바깥 욕실이 덥고 벌레 있다는 후기(11/12에 읽은 후기)</li><li>두 방이 붙어 있는지는 미확인</li></ul></div></div>
+  <div class="pick">번화가·값이 먼저라면 → 이 곳</div>
+  <div class="btns"><a class="b1" href="https://www.booking.com/hotel/id/el-tropico-boutique-kabupaten-lombok-tengah.ko.html?checkin=2026-11-25&amp;checkout=2026-11-29&amp;group_adults=4&amp;group_children=0&amp;no_rooms=2&amp;selected_currency=KRW" target="_blank" rel="noopener">예약 페이지 (부킹)</a><a class="b2" href="https://www.google.com/maps?cid=15451495225919783118" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Dusun Baturiti Jl. Raya Kuta, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 83573</p></article><article class="card" id="s-sima"><div class="hd"><span class="rk">2</span><div class="nm"><h3>Sima Hotel Kuta Lombok</h3><p>번화가에서 가장 가깝고 트윈이 확실한 곳(점수는 낮은 편) · 호텔 트윈 2실 <span class="new">새로 찾은 곳</span></p></div><div class="ov"><span class="st big" aria-label="별 4.2점"><span class="st-f" style="width:84%">★★★★★</span>★★★★★</span><b>4.20</b></div></div>
+  <div class="price"><b>1인 1박 44,027원</b><span>4박 합계 704,436원 · 아침 포함, 환불 안 됨(15% 할인)</span></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 5점"><span class="st-f" style="width:100%">★★★★★</span>★★★★★</span><span class="v">5</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 3.8분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">정해진 트윈 방 2개</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 3점"><span class="st-f" style="width:60%">★★★★★</span>★★★★★</span><span class="v">3</span><span class="why">부킹 8.6·1,252개, 구글 4.4·581개(점수 낮음)</span></li><li><span class="k">값</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">1인 1박 44,027원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">자체 후기엔 소음 불만 없음, 150m쯤 옆 El Tropico 후기의 아침 모스크 소리(추정)</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>방 2개 × 싱글 침대 2개(트윈 방으로 정해진 방) = 침대 4</div><div><span>화장실</span>2(방마다 1)</div>
+    <div><span>수영장</span>함께 쓰는 수영장 2개</div><div><span>점수</span>부킹 8.6 · 구글 4.4(후기 581개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 3.8분 · 10분 안에 닿는 곳 8/10 · 해변까지 604m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>번화가 큰길 바로 옆, 일정 속 가게 10곳 가운데값 3.8분으로 가장 가까움</li><li>처음부터 트윈 방(싱글 2개)이라 침대 걱정이 없음</li><li>아침 포함 1인 1박 44,027원</li><li>수영장 2개</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>구글 4.4점·부킹 8.6점으로 점수는 낮은 편</li><li>옛 정원 쪽 방보다 새 건물 방이 낫다는 후기·둘이 연달아 씻으면 뜨거운 물이 모자란다는 후기(11/12에 읽은 후기)</li><li>방 28㎡</li><li>환불 안 됨</li></ul></div></div>
+  <div class="pick">번화가 바로 옆 + 확실한 트윈 + 아침 포함이 먼저라면 → 이 곳</div>
+  <div class="btns"><a class="b1" href="https://www.booking.com/hotel/id/sima-kuta-lombok.ko.html?checkin=2026-11-25&amp;checkout=2026-11-29&amp;group_adults=4&amp;group_children=0&amp;no_rooms=2&amp;selected_currency=KRW" target="_blank" rel="noopener">예약 페이지 (부킹)</a><a class="b2" href="https://www.google.com/maps?cid=13943235154253272971" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Jl. Raya Kuta, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 83573</p></article><article class="card" id="s-sikara"><div class="hd"><span class="rk">3</span><div class="nm"><h3>Sikara Lombok Hotel</h3><p>트윈 방이 확실하고 후기 좋은 곳 · 호텔 트윈 2실 <span class="you">형님 후보</span></p></div><div class="ov"><span class="st big" aria-label="별 4.125점"><span class="st-f" style="width:82%">★★★★★</span>★★★★★</span><b>4.13</b></div></div>
+  <div class="price"><b>1인 1박 42,636원</b><span>4박 합계 682,183원 · 방만, 부분 환불(25% 할인)</span><div class="alt">또는 아침 포함 + 식당 10% 할인, 부분 환불: 4박 792,213원 (1인 1박 49,513원)</div></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 8.7분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">정해진 트윈 방 2개</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">부킹 9.1·938개, 구글 4.7·852개</span></li><li><span class="k">값</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">1인 1박 42,636원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">옆 호텔 공사 냄새(2024)·흡연·오후 그늘</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>방 2개 × 싱글 침대 2개(트윈 방으로 정해진 방) = 침대 4</div><div><span>화장실</span>2(방마다 1)</div>
+    <div><span>수영장</span>함께 쓰는 수영장 2개 + 스파</div><div><span>점수</span>부킹 9.1 · 구글 4.7(후기 852개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 8.7분 · 10분 안에 닿는 곳 6/10 · 해변까지 841m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>처음부터 트윈 방(싱글 2개)으로 파는 방이라 침대 걱정이 없음</li><li>부킹 9.1(938개)·구글 4.7(852개)</li><li>오늘 25% 할인으로 1인 1박 42,636원</li><li>수영장 2개·스파</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>번화가 서쪽 끝이라 Rascals 스파·Elamu 쪽은 걸어서 14~15분</li><li>&quot;부분 환불&quot; 조건(얼마 돌려받는지 미확인)</li><li>방이 조금 작음·식당 흡연·수영장 오후 그늘·옆 호텔 공사 냄새(2024) 후기(11/12에 읽은 후기)</li><li>지난번 무료 취소(11/18 전)는 이미 지남</li></ul></div></div>
+  <div class="pick">확실한 트윈 + 좋은 후기가 먼저라면 → 이 곳</div>
+  <div class="btns"><a class="b1" href="https://www.booking.com/hotel/id/sikara-lombok.ko.html?checkin=2026-11-25&amp;checkout=2026-11-29&amp;group_adults=4&amp;group_children=0&amp;no_rooms=2&amp;selected_currency=KRW" target="_blank" rel="noopener">예약 페이지 (부킹)</a><a class="b2" href="https://www.google.com/maps?cid=15220029710217633919" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Jl. Mawun, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 83573</p></article><article class="card" id="s-mannys"><div class="hd"><span class="rk">4</span><div class="nm"><h3>Manny&#x27;s Resort 3침실 빌라</h3><p>넷이 빌라 한 채를 쓰는 곳(라스칼스 옆) · 빌라 한 채 <span class="new">새로 찾은 곳</span></p></div><div class="ov"><span class="st big" aria-label="별 4.075점"><span class="st-f" style="width:82%">★★★★★</span>★★★★★</span><b>4.08</b></div></div>
+  <div class="price"><b>1인 1박 37,135원</b><span>4박 합계 594,164원 · 환불 안 됨</span><div class="alt">또는 11/24 전 무료 취소, 11/22까지 돈 안 냄: 4박 660,182원 (1인 1박 41,261원)</div></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 7.3분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">침대 4·욕실 2·거실(둘은 트윈 방을 같이 씀)</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">점수는 높지만 후기 수가 적음</span></li><li><span class="k">값</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">1인 1박 37,135원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 3점"><span class="st-f" style="width:60%">★★★★★</span>★★★★★</span><span class="v">3</span><span class="why">모스크·어두운 밤길</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>침실 3개: 큰 더블 1·더블 1·싱글 2 = 침대 4</div><div><span>화장실</span>2</div>
+    <div><span>수영장</span>빌라 전용 수영장 + 리조트 큰 수영장</div><div><span>점수</span>부킹 9.4 · 구글 5.0(후기 27개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 7.3분 · 10분 안에 닿는 곳 8/10 · 해변까지 908m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>넷이 빌라 한 채를 통째로 씀(거실·부엌·전용 수영장)</li><li>침대 4개·욕실 2개 조건을 그대로 맞춤</li><li>무료 취소 요금도 1인 1박 41,261원</li><li>Rascals 바로 옆이라 동선이 Rascals와 같음</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>후기가 45개(부킹)·27개(구글)로 적음</li><li>근처 모스크 소리로 새벽 5시쯤 깬다는 후기</li><li>밤길이 어둡고 비포장이라는 후기</li><li>빌라 전용 수영장·정원은 작다는 후기</li></ul></div></div>
+  <p class="note">※ 에어비앤비 &quot;Whimsical Family Villa&quot;(4박 ₩922,396으로 더 비쌈)가 같은 단지로 보임 — 대략 위치가 거의 같고 방 구성이 같음(같은 집인지는 추정)</p><div class="pick">우리끼리 빌라·전용 수영장이 먼저라면 → 이 곳</div>
+  <div class="btns"><a class="b1" href="https://www.booking.com/hotel/id/mannys-resort-kabupaten-lombok-tengah.ko.html?checkin=2026-11-25&amp;checkout=2026-11-29&amp;group_adults=4&amp;group_children=0&amp;no_rooms=1&amp;selected_currency=KRW" target="_blank" rel="noopener">예약 페이지 (부킹)</a><a class="b2" href="https://www.google.com/maps?cid=15229155686375574715" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Jl. Raya Kuta, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 83573</p></article>
+
+<h2>11곳 한눈에 <small>색칠한 줄 = 형님 후보</small></h2>
+<div class="scroll"><table><thead><tr><th>순위</th><th>숙소</th><th>별점</th><th>1인 1박(원)</th><th>아침 포함</th><th>걷기</th><th>침대·욕실</th></tr></thead><tbody><tr class=""><td class="n">1</td><td><a href="#s-eltropico">El Tropico Boutique Hotel</a></td><td class="n">4.48</td><td class="n">34,435</td><td class="n">42,087</td><td class="n">4.3분</td><td>침대 4·욕실 2</td></tr><tr class=""><td class="n">2</td><td><a href="#s-sima">Sima Hotel Kuta Lombok</a></td><td class="n">4.20</td><td class="n">44,027</td><td class="n">44,027</td><td class="n">3.8분</td><td>침대 4·욕실 2</td></tr><tr class="me"><td class="n">3</td><td><a href="#s-sikara">Sikara Lombok Hotel</a></td><td class="n">4.13</td><td class="n">42,636</td><td class="n">49,513</td><td class="n">8.7분</td><td>침대 4·욕실 2</td></tr><tr class=""><td class="n">4</td><td><a href="#s-mannys">Manny&#x27;s Resort 3침실 빌라</a></td><td class="n">4.08</td><td class="n">37,135</td><td class="n">아침 따로</td><td class="n">7.3분</td><td>침대 4·욕실 2</td></tr><tr class="me"><td class="n">5</td><td><a href="#s-rascals">Rascals Hotel (어른만)</a></td><td class="n">4.05</td><td class="n">51,348</td><td class="n">51,348</td><td class="n">8.4분</td><td>침대 4·욕실 2</td></tr><tr class=""><td class="n">6</td><td><a href="#s-toasted">Hotel Toasted Lombok (새 호텔)</a></td><td class="n">3.88</td><td class="n">29,292</td><td class="n">32,659</td><td class="n">8.2분</td><td>침대 4·욕실 2</td></tr><tr class=""><td class="n">7</td><td><a href="#s-reset">Reset Lombok Hotel (어른만)</a></td><td class="n">3.78</td><td class="n">29,708</td><td class="n">33,009</td><td class="n">13.9분</td><td>침대 4·욕실 2</td></tr><tr class="me"><td class="n">8</td><td><a href="#s-jura">Villa Jura, Habitat Garden (형님 3번)</a></td><td class="n">3.43</td><td class="n">36,574</td><td class="n">아침 없음</td><td class="n">5.6분</td><td>침대 2(둘씩 한 침대)·욕실 2.5</td></tr><tr class="me"><td class="n">9</td><td><a href="#s-ody">Ody Villa (형님 2번)</a></td><td class="n">3.40</td><td class="n">64,005</td><td class="n">아침 없음</td><td class="n">8.6분</td><td>침대 4·욕실 2</td></tr><tr class="me"><td class="n">10</td><td><a href="#s-dospalmas">Dos Palmas Villa (형님 1번)</a></td><td class="n">3.08</td><td class="n">54,862</td><td class="n">아침 없음</td><td class="n">21.4분</td><td>침대 4·욕실 4</td></tr><tr class="me"><td class="n">11</td><td><a href="#s-numantia">Villa Numantia, Uyuni Villas (형님 4번)</a></td><td class="n">2.83</td><td class="n">47,547</td><td class="n">아침 없음</td><td class="n">13.1분</td><td>침대 2(둘씩 한 침대)·욕실 2</td></tr></tbody></table></div>
+<p class="small">걷기는 일정에 있는 꾸따 맛집·바 10곳까지 걸리는 시간의 가운데값이에요.</p>
+
+<h2>지도 <small>번호 = 순위</small></h2>
+<div id="map"></div>
+<div class="legend"><span><i style="background:var(--accent)"></i>추천 1~4위</span><span><i style="background:#9a9286"></i>5~11위</span><span><i style="background:var(--sea)"></i>일정 속 맛집·바</span><span><i style="background:var(--blue);border-radius:2px;height:4px;width:16px"></i>번화가(파란 줄)</span></div>
+
+<h2 id="rest">5~11위 <small>5위 Rascals는 펼쳐 두었고, 형님 에어비앤비 4곳도 여기 있어요</small></h2>
+<article class="card" id="s-rascals"><div class="hd"><span class="rk">5</span><div class="nm"><h3>Rascals Hotel (어른만)</h3><p>점수와 후기 수로는 가장 믿을 만한 곳, 값은 가장 비싼 축 · 호텔 트윈 2실 <span class="you">형님 후보</span></p></div><div class="ov"><span class="st big" aria-label="별 4.05점"><span class="st-f" style="width:81%">★★★★★</span>★★★★★</span><b>4.05</b></div></div>
+  <div class="price"><b>1인 1박 51,348원</b><span>4박 합계 821,560원 · 아침 포함, 환불 안 됨</span><div class="alt">무료 취소 요금은 화면에 없음</div></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 8.4분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">트윈 2실(트윈 보장은 아님)</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 5점"><span class="st-f" style="width:100%">★★★★★</span>★★★★★</span><span class="v">5</span><span class="why">부킹 9.6·2,478개, 구글 4.8·844개</span></li><li><span class="k">값</span><span class="st" aria-label="별 3점"><span class="st-f" style="width:60%">★★★★★</span>★★★★★</span><span class="v">3</span><span class="why">1인 1박 51,348원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">자체 후기엔 소음 불만이 거의 없지만 옆 동네 모스크(추정)</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>방 2개 × 싱글 침대 2개(트윈, 보장 아님) = 침대 4</div><div><span>화장실</span>2(방마다 1)</div>
+    <div><span>수영장</span>함께 쓰는 수영장 3개 + 스파·사우나(11/26 일정의 스파가 이 안)</div><div><span>점수</span>부킹 9.6 · 구글 4.8(후기 844개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 8.4분 · 10분 안에 닿는 곳 8/10 · 해변까지 988m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>부킹 9.6점·후기 2,478개, 점수와 후기 수를 같이 보면 이번 후보 중 가장 믿을 만함</li><li>아침 포함</li><li>11/26 일정의 Rascals 스파가 같은 곳이라 걸어서 0분</li><li>어른만 묵는 곳</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>넷이 1인 1박 51,348원으로 호텔 후보 중 가장 비쌈</li><li>환불 안 되는 요금만 있음</li><li>트윈 침대는 &quot;가능하면&quot; 주는 조건(보장 아님), 이 방도 남은 방 2개</li><li>저녁 가게 모인 남쪽까지는 걸어서 8분쯤</li><li>90m 옆 Manny&#x27;s 후기에 새벽 모스크 소리 — 여기서도 들릴 수 있음(추정)</li></ul></div></div>
+  <div class="pick">후기·아침·스파가 먼저라면 → 이 곳</div>
+  <div class="btns"><a class="b1" href="https://www.booking.com/hotel/id/rascals.ko.html?checkin=2026-11-25&amp;checkout=2026-11-29&amp;group_adults=4&amp;group_children=0&amp;no_rooms=2&amp;selected_currency=KRW" target="_blank" rel="noopener">예약 페이지 (부킹)</a><a class="b2" href="https://www.google.com/maps?cid=7305879082729497331" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Jl. Kuta Lombok, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 83573</p></article><details class="card" id="s-toasted"><summary><div class="hd"><span class="rk">6</span><div class="nm"><h3>Hotel Toasted Lombok (새 호텔)</h3><p>번화가 위 새 호텔(후기 아직 적음) · 호텔 트윈 2실 <span class="new">새로 찾은 곳</span></p></div><div class="ov"><span class="st big" aria-label="별 3.875점"><span class="st-f" style="width:78%">★★★★★</span>★★★★★</span><b>3.88</b></div></div></summary>
+  <div class="price"><b>1인 1박 29,292원</b><span>4박 합계 468,676원 · 방만, 환불 안 됨</span><div class="alt">또는 아침 + 매일 스파 1시간 포함, 환불 안 됨: 4박 522,547원 (1인 1박 32,659원)</div></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 8.2분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">정해진 트윈 방 2개</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 2.5점"><span class="st-f" style="width:50%">★★★★★</span>★★★★★</span><span class="v">2.5</span><span class="why">점수는 높지만 후기 수가 매우 적음</span></li><li><span class="k">값</span><span class="st" aria-label="별 5점"><span class="st-f" style="width:100%">★★★★★</span>★★★★★</span><span class="v">5</span><span class="why">1인 1박 29,292원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">후기가 적어 미확인</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>방 2개 × 싱글 침대 2개(트윈 방) = 침대 4</div><div><span>화장실</span>2(방마다 1)</div>
+    <div><span>수영장</span>함께 쓰는 수영장 1개 + 스파·사우나</div><div><span>점수</span>부킹 9.9 · 구글 5.0(후기 21개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 8.2분 · 10분 안에 닿는 곳 7/10 · 해변까지 973m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>번화가 큰길(ON by TOASTED 자리) 위</li><li>이번 후보 중 가장 쌈: 아침+매일 스파 1시간 포함해도 1인 1박 32,659원</li><li>방 6개짜리 새 호텔, 어른만</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>후기가 부킹 8개·구글 21개뿐이라 아직 믿기 어려움</li><li>방이 28㎡로 작은 편</li><li>환불 안 됨</li><li>저녁 가게 모인 남쪽까지는 걸어서 8분쯤</li></ul></div></div>
+  
+  <div class="btns"><a class="b1" href="https://www.booking.com/hotel/id/toasted-lombok.ko.html?checkin=2026-11-25&amp;checkout=2026-11-29&amp;group_adults=4&amp;group_children=0&amp;no_rooms=2&amp;selected_currency=KRW" target="_blank" rel="noopener">예약 페이지 (부킹)</a><a class="b2" href="https://www.google.com/maps?cid=14635484536085542600" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Jl. Raya Kuta, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 83573</p></details><details class="card" id="s-reset"><summary><div class="hd"><span class="rk">7</span><div class="nm"><h3>Reset Lombok Hotel (어른만)</h3><p>싸고 조용하지만 서쪽으로 조금 멂 · 호텔 트윈 2실 <span class="new">새로 찾은 곳</span></p></div><div class="ov"><span class="st big" aria-label="별 3.775점"><span class="st-f" style="width:76%">★★★★★</span>★★★★★</span><b>3.78</b></div></div></summary>
+  <div class="price"><b>1인 1박 29,708원</b><span>4박 합계 475,331원 · 방만, 미리 안 내고 숙소에서 냄(취소하면 비용 있음, 금액 미확인)</span><div class="alt">또는 아침 포함, 숙소에서 냄: 4박 528,146원 (1인 1박 33,009원)</div></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 3점"><span class="st-f" style="width:60%">★★★★★</span>★★★★★</span><span class="v">3</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 13.9분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">트윈 2실(보장 아님)</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">부킹 9.2·400개, 구글 4.8·116개</span></li><li><span class="k">값</span><span class="st" aria-label="별 5점"><span class="st-f" style="width:100%">★★★★★</span>★★★★★</span><span class="v">5</span><span class="why">1인 1박 29,708원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">공사 소음 후기</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>방 2개 × 싱글 침대 2개(트윈, 보장 아님) = 침대 4</div><div><span>화장실</span>2(방마다 1)</div>
+    <div><span>수영장</span>함께 쓰는 수영장</div><div><span>점수</span>부킹 9.2 · 구글 4.8(후기 116개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 13.9분 · 10분 안에 닿는 곳 1/10 · 해변까지 1,341m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>아침 포함해도 1인 1박 33,009원</li><li>미리 돈을 안 내고 숙소에서 냄</li><li>부킹 9.2(400개)·구글 4.8(116개)</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>서쪽 Jl. Mawun 쪽이라 저녁 가게까지 걸어서 14분쯤</li><li>공사 소음·모기 후기(2024년 후기)</li><li>트윈은 &quot;가능하면&quot;</li><li>방 26㎡로 작은 편</li><li>취소하면 비용이 드는 요금(금액 미확인)</li></ul></div></div>
+  
+  <div class="btns"><a class="b1" href="https://www.booking.com/hotel/id/reset-boutique.ko.html?checkin=2026-11-25&amp;checkout=2026-11-29&amp;group_adults=4&amp;group_children=0&amp;no_rooms=2&amp;selected_currency=KRW" target="_blank" rel="noopener">예약 페이지 (부킹)</a><a class="b2" href="https://www.google.com/maps?cid=2363908237373959117" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Jl. Raya Kuta Jl. Mawun, Kuta, Kec. Pujut, Lombok, Nusa Tenggara Bar. 83573</p></details><details class="card" id="s-jura"><summary><div class="hd"><span class="rk">8</span><div class="nm"><h3>Villa Jura, Habitat Garden (형님 3번)</h3><p>가깝고 싸지만 둘씩 한 침대·공사 단지 · 빌라 한 채 <span class="you">형님 후보</span></p></div><div class="ov"><span class="st big" aria-label="별 3.425점"><span class="st-f" style="width:68%">★★★★★</span>★★★★★</span><b>3.43</b></div></div></summary>
+  <div class="price"><b>1인 1박 36,574원</b><span>4박 합계 585,188원 · 환불 안 됨(원래 ₩767,495에서 할인)</span></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 5.6분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 2점"><span class="st-f" style="width:40%">★★★★★</span>★★★★★</span><span class="v">2</span><span class="why">둘씩 한 침대</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">5.0·33개(구글 단지 5.0·7개)</span></li><li><span class="k">값</span><span class="st" aria-label="별 4.5점"><span class="st-f" style="width:90%">★★★★★</span>★★★★★</span><span class="v">4.5</span><span class="why">1인 1박 36,574원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 2점"><span class="st-f" style="width:40%">★★★★★</span>★★★★★</span><span class="v">2</span><span class="why">공사장 안 + 모스크</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>침실 2개 × 킹 침대 1 = 침대 2(둘씩 한 침대)</div><div><span>화장실</span>2.5</div>
+    <div><span>수영장</span>빌라 전용 수영장</div><div><span>점수</span>에어비앤비 5.0(후기 33개) · 구글 5.0(후기 7개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 5.6분 · 10분 안에 닿는 곳 8/10 · 해변까지 738m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>형님 후보 가운데 가장 쌈: 1인 1박 36,574원</li><li>숙소 설명 기준 번화가 한가운데까지 3분(일정 속 가게 10곳 가운데값 5.6분)</li><li>후기 33개 모두 5점</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>킹 침대 2개뿐이라 두 명씩 한 침대(각자 침대 조건 안 맞음)</li><li>&quot;공사 중인 단지 안&quot; 아침 8시~저녁 6시 공사</li><li>모스크가 가까워 새벽 4시 반 기도 소리에 깼다는 후기</li><li>환불 안 됨</li></ul></div></div>
+  
+  <div class="btns"><a class="b1" href="https://www.airbnb.co.kr/rooms/1519166739689860937?check_in=2026-11-25&amp;check_out=2026-11-29&amp;adults=4" target="_blank" rel="noopener">예약 페이지 (에어비앤비)</a><a class="b2" href="https://www.google.com/maps?cid=10862896089018085099" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Jl. Raya Kuta, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 85373</p></details><details class="card" id="s-ody"><summary><div class="hd"><span class="rk">9</span><div class="nm"><h3>Ody Villa (형님 2번)</h3><p>새 빌라, 값이 6만 원 넘음 · 빌라 한 채 <span class="you">형님 후보</span></p></div><div class="ov"><span class="st big" aria-label="별 3.4점"><span class="st-f" style="width:68%">★★★★★</span>★★★★★</span><b>3.40</b></div></div></summary>
+  <div class="price"><b>1인 1박 64,005원</b><span>4박 합계 1,024,080원 · 11/24 전 무료 취소</span></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 8.6분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">침대 4·욕실 2(침대 종류·소파 침대 여부 미확인)</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 2.5점"><span class="st-f" style="width:50%">★★★★★</span>★★★★★</span><span class="v">2.5</span><span class="why">5.0이지만 후기 6개</span></li><li><span class="k">값</span><span class="st" aria-label="별 2점"><span class="st-f" style="width:40%">★★★★★</span>★★★★★</span><span class="v">2</span><span class="why">1인 1박 64,005원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">조용하다는 후기(표본 작음)</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>침실 3개·침대 4(형님 말씀: 한 방에 침대 2개 — 침대 종류는 화면에 안 나옴)</div><div><span>화장실</span>2</div>
+    <div><span>수영장</span>빌라 전용 수영장</div><div><span>점수</span>에어비앤비 5.0(후기 6개) · 구글 5.0(후기 2개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 8.6분 · 10분 안에 닿는 곳 9/10 · 해변까지 1,046m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>11/24 전까지 무료 취소</li><li>새로 지어 깨끗하다는 후기, 큰길에서 한 골목 들어가 조용하다는 후기</li><li>침대 4·욕실 2 조건 맞음</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>1인 1박 64,005원으로 형님 후보 중 가장 비쌈(6만 원 넘음)</li><li>후기 6개·호스트 1개월째</li><li>정확한 위치 미확인(에어비앤비 대략 점과 구글 &quot;Ody villa&quot; 점이 600m쯤 떨어짐)</li></ul></div></div>
+  <p class="note">※ 구글 &quot;Ody villa&quot;(평점 5.0, 후기 2개) 점 기준. 에어비앤비 대략 점 기준이면 걷는 가운데값 11.1분</p>
+  <div class="btns"><a class="b1" href="https://www.airbnb.co.kr/rooms/1779719677279632674?check_in=2026-11-25&amp;check_out=2026-11-29&amp;adults=4" target="_blank" rel="noopener">예약 페이지 (에어비앤비)</a><a class="b2" href="https://www.google.com/maps?cid=15796543967718513949" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 477H+6M3, Jl. Raya Kuta, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 83573</p></details><details class="card" id="s-dospalmas"><summary><div class="hd"><span class="rk">10</span><div class="nm"><h3>Dos Palmas Villa (형님 1번)</h3><p>집은 좋지만 번화가까지 걸어서 20분 · 빌라 한 채 <span class="you">형님 후보</span></p></div><div class="ov"><span class="st big" aria-label="별 3.075점"><span class="st-f" style="width:62%">★★★★★</span>★★★★★</span><b>3.08</b></div></div></summary>
+  <div class="price"><b>1인 1박 54,862원</b><span>4박 합계 877,784원 · 환불 안 됨(원래 ₩1,038,494에서 할인)</span></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 1점"><span class="st-f" style="width:20%">★★★★★</span>★★★★★</span><span class="v">1</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 21.4분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 5점"><span class="st-f" style="width:100%">★★★★★</span>★★★★★</span><span class="v">5</span><span class="why">침실 4·욕실 4</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 4점"><span class="st-f" style="width:80%">★★★★★</span>★★★★★</span><span class="v">4</span><span class="why">4.95·80개(구글 4.6·10개)</span></li><li><span class="k">값</span><span class="st" aria-label="별 3점"><span class="st-f" style="width:60%">★★★★★</span>★★★★★</span><span class="v">3</span><span class="why">1인 1박 54,862원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">공사장 근처</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>침실 4개: 킹 2·퀸 2 = 침대 4</div><div><span>화장실</span>4(설명에는 4.5)</div>
+    <div><span>수영장</span>빌라 전용 수영장</div><div><span>점수</span>에어비앤비 4.95(후기 80개) · 구글 4.6(후기 10개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 21.4분 · 10분 안에 닿는 곳 0/10 · 해변까지 1,967m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>침실 4개·욕실 4개로 넷이 각자 방</li><li>에어비앤비 4.95점(후기 80개), 슈퍼호스트</li><li>전용 수영장·매일 청소</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>숙소 설명에 &quot;큰길까지 걸어서 20분&quot;이라고 적힘 — 지도 길로도 저녁 가게까지 21분쯤</li><li>걸어서 20분쯤이라 밤엔 오토바이·차가 편함(후기엔 &quot;2분 차 타면 중심&quot;)</li><li>&quot;공사장 근처&quot;라고 적힘</li><li>환불 안 됨</li></ul></div></div>
+  
+  <div class="btns"><a class="b1" href="https://www.airbnb.co.kr/rooms/956818589935019010?check_in=2026-11-25&amp;check_out=2026-11-29&amp;adults=4" target="_blank" rel="noopener">예약 페이지 (에어비앤비)</a><a class="b2" href="https://www.google.com/maps?cid=14419188418601595947" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 47CF+7JX, Jl. Raya Kuta, Kuta, Kec. Pujut, Kabupaten Lombok Tengah, Nusa Tenggara Bar. 83573</p></details><details class="card" id="s-numantia"><summary><div class="hd"><span class="rk">11</span><div class="nm"><h3>Villa Numantia, Uyuni Villas (형님 4번)</h3><p>둘씩 한 침대·옆집 공사 소음 · 빌라 한 채 <span class="you">형님 후보</span></p></div><div class="ov"><span class="st big" aria-label="별 2.825점"><span class="st-f" style="width:57%">★★★★★</span>★★★★★</span><b>2.83</b></div></div></summary>
+  <div class="price"><b>1인 1박 47,547원</b><span>4박 합계 760,744원 · 11/20 오후 2시 전 무료 취소</span></div>
+  <ul class="subst"><li><span class="k">동선(걷기)</span><span class="st" aria-label="별 3점"><span class="st-f" style="width:60%">★★★★★</span>★★★★★</span><span class="v">3</span><span class="why">일정 속 꾸따 가게 10곳 걷는 시간 가운데값 13.1분</span></li><li><span class="k">침대·화장실</span><span class="st" aria-label="별 2점"><span class="st-f" style="width:40%">★★★★★</span>★★★★★</span><span class="v">2</span><span class="why">둘씩 한 침대</span></li><li><span class="k">후기 믿음</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">4.83·40개</span></li><li><span class="k">값</span><span class="st" aria-label="별 3.5점"><span class="st-f" style="width:70%">★★★★★</span>★★★★★</span><span class="v">3.5</span><span class="why">1인 1박 47,547원(가장 싼 요금)</span></li><li><span class="k">조용함</span><span class="st" aria-label="별 2점"><span class="st-f" style="width:40%">★★★★★</span>★★★★★</span><span class="v">2</span><span class="why">옆집 공사 소음</span></li></ul>
+  <div class="facts">
+    <div><span>잠자리</span>침실 2개 × 킹 침대 1 = 침대 2(둘씩 한 침대)</div><div><span>화장실</span>2</div>
+    <div><span>수영장</span>빌라 전용 수영장(오후엔 그늘)</div><div><span>점수</span>에어비앤비 4.83(후기 40개) · 구글 4.9(후기 34개)</div>
+    <div><span>걷기</span>일정 속 꾸따 가게 10곳 가운데값 13.1분 · 10분 안에 닿는 곳 1/10 · 해변까지 1,343m</div>
+  </div>
+  <div class="pc"><div class="pro"><h4>좋은 점</h4><ul><li>헬스장(Xeno Gym) 무료</li><li>11/20 오후 2시 전 무료 취소</li><li>구글 단지 평점 4.9(34개)</li></ul></div>
+  <div class="con"><h4>아쉬운 점</h4><ul><li>킹 침대 2개뿐이라 두 명씩 한 침대</li><li>바로 옆 공사가 시끄럽다는 후기가 여러 개(2026년 4·8·10월), 하루 만에 나간 손님도 있음</li><li>지도에 있는 길로는 저녁 가게까지 13분쯤(골목이 지도에 없으면 더 짧을 수 있음)</li><li>수영장이 오후엔 그늘</li></ul></div></div>
+  <p class="note">※ 지도 길 빈틈 의심: Uyuni Villas 점은 Rascals에서 직선 109m인데 지도 길로는 Rascals 스파까지 950m예요. 후기에는 &quot;About a 5 minute walk&quot;라고 적혀 있어 실제로는 Rascals와 비슷할 수 있어요(추정)</p>
+  <div class="btns"><a class="b1" href="https://www.airbnb.co.kr/rooms/1439607033863883482?check_in=2026-11-25&amp;check_out=2026-11-29&amp;adults=4" target="_blank" rel="noopener">예약 페이지 (에어비앤비)</a><a class="b2" href="https://www.google.com/maps?cid=77078305350623053" target="_blank" rel="noopener">구글 지도 위치</a></div>
+  <p class="adr">📍 Kuta, Pujut, Central Lombok Regency, West Nusa Tenggara 83573</p></details>
+
+<h2>숙소에서 가게까지 걷는 시간 <small>분</small></h2>
+<div class="scroll"><table class="walk"><thead><tr><th>숙소</th><th>11/25 점심<br><small>Kenza Cafe &amp; Resta</small></th><th>11/26 아침 카페<br><small>Honey Jack</small></th><th>11/26 점심<br><small>Pawon Nusantara</small></th><th>11/26 스파<br><small>Rascals Spa • Saun</small></th><th>11/26 저녁<br><small>Cantina Mexicana</small></th><th>11/26 밤 바<br><small>PULO ALL DAY CAFE </small></th><th>11/27 저녁<br><small>Ramen Otaku</small></th><th>11/27 밤 바<br><small>KRNK Bar &amp; Restaur</small></th><th>11/28 저녁<br><small>Elamu</small></th><th>11/28 밤 바<br><small>The Bus Bar</small></th></tr></thead><tbody><tr><td>1. El Tropico Boutique Hotel</td><td class="n g">4</td><td class="n">11</td><td class="n g">5</td><td class="n g">4</td><td class="n g">3</td><td class="n g">0</td><td class="n g">3</td><td class="n g">4</td><td class="n">11</td><td class="n">7</td></tr><tr><td>2. Sima Hotel Kuta Lombok</td><td class="n g">4</td><td class="n">14</td><td class="n g">4</td><td class="n">7</td><td class="n g">3</td><td class="n g">3</td><td class="n g">2</td><td class="n g">3</td><td class="n">11</td><td class="n">7</td></tr><tr><td>3. Sikara Lombok Hotel</td><td class="n g">6</td><td class="n">11</td><td class="n">7</td><td class="n">15</td><td class="n">7</td><td class="n">11</td><td class="n">8</td><td class="n">7</td><td class="n">14</td><td class="n">10</td></tr><tr><td>4. Manny&#x27;s Resort 3침실 빌라</td><td class="n">8</td><td class="n">14</td><td class="n">8</td><td class="n g">1</td><td class="n">7</td><td class="n g">3</td><td class="n g">6</td><td class="n">7</td><td class="n">12</td><td class="n">10</td></tr><tr><td>5. Rascals Hotel</td><td class="n">9</td><td class="n">15</td><td class="n">9</td><td class="n g">0</td><td class="n">8</td><td class="n g">4</td><td class="n">7</td><td class="n">8</td><td class="n">12</td><td class="n">10</td></tr><tr><td>6. Hotel Toasted Lombok</td><td class="n">9</td><td class="n">10</td><td class="n">9</td><td class="n">8</td><td class="n">8</td><td class="n g">4</td><td class="n">7</td><td class="n">8</td><td class="n">15</td><td class="n">11</td></tr><tr><td>7. Reset Lombok Hotel</td><td class="n">13</td><td class="n g">1</td><td class="n">14</td><td class="n">14</td><td class="n">14</td><td class="n">10</td><td class="n">14</td><td class="n">14</td><td class="n r">20</td><td class="n r">16</td></tr><tr><td>8. Villa Jura</td><td class="n g">5</td><td class="n">14</td><td class="n g">6</td><td class="n">7</td><td class="n g">4</td><td class="n g">3</td><td class="n g">4</td><td class="n g">5</td><td class="n">12</td><td class="n">8</td></tr><tr><td>9. Ody Villa</td><td class="n">10</td><td class="n r">16</td><td class="n">10</td><td class="n g">3</td><td class="n">9</td><td class="n g">5</td><td class="n">8</td><td class="n">9</td><td class="n">9</td><td class="n">7</td></tr><tr><td>10. Dos Palmas Villa</td><td class="n r">22</td><td class="n r">23</td><td class="n r">22</td><td class="n r">21</td><td class="n r">21</td><td class="n r">17</td><td class="n r">20</td><td class="n r">21</td><td class="n r">29</td><td class="n r">25</td></tr><tr><td>11. Villa Numantia</td><td class="n">14</td><td class="n">15</td><td class="n">14</td><td class="n">13</td><td class="n">12</td><td class="n">9</td><td class="n">12</td><td class="n">13</td><td class="n r">20</td><td class="n r">16</td></tr></tbody></table></div>
+<p class="small">초록 칸은 6분 안, 붉은 칸은 15분 넘음이에요. 오픈스트리트맵 걷는 길 기준, 걸음 시속 4.5km로 분 계산(추정). 지도에 없는 골목이 있으면 실제는 더 짧을 수 있음.</p>
+
+<h2>예약 전에 할 일</h2>
+<div class="todo"><ol>
+<li>El Tropico·Rascals·Reset의 트윈은 "가능하면" 주는 조건이에요(Sima·Sikara·Toasted는 처음부터 트윈 방). 예약한 뒤 부킹 메시지로 "2 single beds in both rooms, please"라고 꼭 보내 주세요.</li>
+<li>무료 취소 마감이 곧이에요. El Tropico 무료 취소 요금은 "11/20 전"이라 사실상 11/19 안이고, Villa Numantia는 11/20 오후 2시 전, Manny's·Ody는 11/24 전이에요.</li>
+<li>El Tropico Standard 트윈과 Rascals 발코니 트윈은 남은 방이 2개뿐이에요. 한 방만 팔려도 2실을 못 잡으니 빨리 정하는 게 좋아요.</li>
+<li>값은 오늘(11/19) 값이에요. 할인(10~30%)이 붙은 곳이 많아서 열어 보면 조금 다를 수 있어요.</li>
+<li>두 방을 붙여 달라는 부탁도 메시지로 같이 보내면 좋아요(붙은 방인지는 미확인).</li>
+</ol></div>
+
+<h2>별점은 이렇게 매겼어요</h2>
+<ul class="plain">
+<li>다섯 칸을 각각 5점으로 매긴 뒤 무게를 곱해 더했어요. 동선(걷기) 30% · 침대·화장실 20% · 후기 믿음 20% · 값 15% · 조용함 15%.</li>
+<li>동선은 가운데값 5분 안이면 5점이고, 7.5분 4.5점, 9분 4점, 11분 3.5점, 14분 3점, 18분 2점이에요. 그보다 멀면 1점이에요.</li>
+<li>값은 1인 1박 3.5만 원 안이면 5점이고, 4만 4.5점, 4.5만 4점, 5만 3.5점, 5.5만 3점, 6만 2.5점, 6.5만 2점이에요(가장 싼 예약 가능 요금 기준).</li>
+<li>침대·화장실은 각자 침대와 화장실 2개를 맞추면 4점 이상이에요. 둘이 한 침대를 써야 하면 2점이에요.</li>
+<li>후기 믿음은 점수와 후기 수를 같이 봤어요(후기가 적으면 점수가 높아도 낮게).</li>
+<li>조용함은 후기 불만으로 봤어요. 5 소음 불만 없음 · 4.5 작은 불만만 · 4 소음 걱정 1가지(옆 동네 후기 추정 포함) · 3.5 소음 후기 + 다른 불편 · 3 소음 + 밤길 같은 불편 여럿 · 2 공사장 안이거나 옆집 공사로 손님이 떠남.</li>
+<li>값은 가장 싼 요금으로 쟀어요(방만인 곳도 있고, Rascals·Sima처럼 아침이 꼭 붙는 곳도 있어요). 일정에 아침 카페가 따로 있어서 방값을 먼저 봤어요. 아침 포함 값으로 호텔끼리 견주면 El Tropico Boutique Hotel → Sima Hotel Kuta Lombok → (Sikara Lombok Hotel·Rascals Hotel 같은 점수) 순이에요. Manny's 빌라는 아침 따로 KRW 6,969(1인 1박인지 미확인)예요.</li>
+</ul>
+
+<h2>더 찾아봤지만 뺀 곳</h2>
+<ul class="plain"><li><b>ADENG ADENG HOUSE (에어비앤비 4침실)</b> — ₩704,944(1인 1박 44,059원)·침대 7·욕실 3이지만 에어비앤비 4.55점, 공사 소음·&quot;값에 비해 별로&quot; 후기</li><li><b>Whimsical Family Villa (에어비앤비 3침실)</b> — ₩922,396 — Manny&#x27;s Resort 빌라와 같은 단지로 보여(추정) 부킹 값이 더 쌈</li><li><b>Luxury 3BR Pool Villa (에어비앤비)</b> — ₩970,828, 넷째 자리는 소파 침대, &quot;바·식당까지 15~20분 걷는다&quot;는 후기</li><li><b>Bale Nine (에어비앤비)</b> — ₩1,024,080, 언덕 위·2층 침대(벙크), 해변까지 20분</li><li><b>New villa 3 bedrooms quiet place·Caracola·Iron Rose·Spacious 3BR (에어비앤비)</b> — 조건은 맞지만 후기 3~15개로 적고 공사·정전·구글 4.2 같은 불만(11/12에 확인), 확실히 더 나은 곳은 없음</li><li><b>후기 없는 4곳 (4 double bed hakimi·villa homey 2곳·4 Rooms @Res Village)</b> — 후기가 0개라 믿을 근거가 없음</li><li><b>Premium 3 Bedroom Villa Private Pool central Kuta (에어비앤비)</b> — ₩634,020·4.94점이지만 침대가 3개(11/12에 확인)</li><li><b>Villa A&amp;A·MAS 4침실·Merendeng 빌라들 (에어비앤비)</b> — 1인 1박 73,000~91,000원으로 6만 원을 크게 넘음(Villa A&amp;A는 같은 공사 단지)</li></ul>
+
+<h2>확인 못 한 것</h2>
+<ul class="plain"><li>숙소 공식 홈페이지 직접 예약가: 검색 결과가 전부 예약 사이트라 공식 예약 페이지를 못 찾음</li><li>시카라 &quot;부분 환불&quot;이 얼마인지: 조건 창이 자동 브라우저에서 안 열림(미확인)</li><li>호텔 트윈 2실이 서로 붙은 방인지: 미확인</li><li>Ody Villa 정확한 위치: 예약 뒤에 알려 줌(미확인)</li><li>호텔 후기 불만(엘 트로피코·라스칼스·시카라·매니스·리셋·시마)은 11/12에 읽은 후기 그대로</li></ul>
+<p class="small">자료: 2026-11-19 0시 33분~0시 55분(한국 시각), 부킹·에어비앤비·구글 지도를 화면 없는 자동 브라우저로 읽음 / 걷는 길은 routing.openstreetmap.de(걷기). 모든 값과 근거 글은 research/17-stay-compare.json에 있어요.</p>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+var M={"stays": [{"n": 1, "name": "El Tropico Boutique Hotel", "lat": -8.8883262, "lng": 116.2761321, "top": true, "me": false, "pp": 34435, "ov": "4.48", "url": "https://www.google.com/maps?cid=15451495225919783118"}, {"n": 2, "name": "Sima Hotel Kuta Lombok", "lat": -8.889635, "lng": 116.2759628, "top": true, "me": false, "pp": 44027, "ov": "4.20", "url": "https://www.google.com/maps?cid=13943235154253272971"}, {"n": 3, "name": "Sikara Lombok Hotel", "lat": -8.8900297, "lng": 116.2737042, "top": true, "me": true, "pp": 42636, "ov": "4.13", "url": "https://www.google.com/maps?cid=15220029710217633919"}, {"n": 4, "name": "Manny's Resort 3침실 빌라", "lat": -8.887297, "lng": 116.2775529, "top": true, "me": false, "pp": 37135, "ov": "4.08", "url": "https://www.google.com/maps?cid=15229155686375574715"}, {"n": 5, "name": "Rascals Hotel (어른만)", "lat": -8.8865747, "lng": 116.2779388, "top": false, "me": true, "pp": 51348, "ov": "4.05", "url": "https://www.google.com/maps?cid=7305879082729497331"}, {"n": 6, "name": "Hotel Toasted Lombok (새 호텔)", "lat": -8.8857669, "lng": 116.275203, "top": false, "me": false, "pp": 29292, "ov": "3.88", "url": "https://www.google.com/maps?cid=14635484536085542600"}, {"n": 7, "name": "Reset Lombok Hotel (어른만)", "lat": -8.8885864, "lng": 116.271585, "top": false, "me": false, "pp": 29708, "ov": "3.78", "url": "https://www.google.com/maps?cid=2363908237373959117"}, {"n": 8, "name": "Villa Jura, Habitat Garden (형님 3번)", "lat": -8.8892145, "lng": 116.2752719, "top": false, "me": true, "pp": 36574, "ov": "3.43", "url": "https://www.google.com/maps?cid=10862896089018085099"}, {"n": 9, "name": "Ody Villa (형님 2번)", "lat": -8.886991, "lng": 116.279165, "top": false, "me": true, "pp": 64005, "ov": "3.40", "url": "https://www.google.com/maps?cid=15796543967718513949"}, {"n": 10, "name": "Dos Palmas Villa (형님 1번)", "lat": -8.8789348, "lng": 116.272994, "top": false, "me": true, "pp": 54862, "ov": "3.08", "url": "https://www.google.com/maps?cid=14419188418601595947"}, {"n": 11, "name": "Villa Numantia, Uyuni Villas (형님 4번)", "lat": -8.8859536, "lng": 116.2787086, "top": false, "me": true, "pp": 47547, "ov": "2.83", "url": "https://www.google.com/maps?cid=77078305350623053"}], "spots": [{"name": "Kenza Cafe & Restaurant Kuta Lombok", "when": "11/25 점심", "lat": -8.891217, "lng": 116.276882}, {"name": "Honey Jack - Brunch Cafe", "when": "11/26 아침 카페", "lat": -8.88915, "lng": 116.271498}, {"name": "Pawon Nusantara Kuta Lombok", "when": "11/26 점심", "lat": -8.891462, "lng": 116.277127}, {"name": "Rascals Spa • Sauna • Ice Bath • Magnesium pool", "when": "11/26 스파", "lat": -8.8867876, "lng": 116.2779074}, {"name": "Cantina Mexicana Kuta Lombok", "when": "11/26 저녁", "lat": -8.890527, "lng": 116.276995}, {"name": "PULO ALL DAY CAFE & BAR", "when": "11/26 밤 바", "lat": -8.888215, "lng": 116.27631}, {"name": "Ramen Otaku Lombok", "when": "11/27 저녁", "lat": -8.890348, "lng": 116.276649}, {"name": "KRNK Bar & Restaurant", "when": "11/27 밤 바", "lat": -8.890683, "lng": 116.277007}, {"name": "Elamu Lombok", "when": "11/28 저녁", "lat": -8.890671, "lng": 116.28121}, {"name": "The Bus Bar", "when": "11/28 밤 바", "lat": -8.89034, "lng": 116.278961}], "line": [[-8.8806979, 116.2739909], [-8.8830628, 116.2742945], [-8.8847145, 116.2755651], [-8.8857193, 116.2752185], [-8.8896393, 116.2769973], [-8.8918788, 116.2770827]]};
+(function(){
+  var map=L.map('map',{scrollWheelZoom:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  var b=[];
+  L.polyline(M.line,{color:'#2f6fd6',weight:6,opacity:.75}).addTo(map).bindPopup('번화가(형님 사진의 파란 줄)');
+  M.spots.forEach(function(s){b.push([s.lat,s.lng]);
+    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="spot"></div>',iconSize:[12,12],iconAnchor:[6,6]})}).addTo(map).bindPopup('<b>'+s.name+'</b><br>'+s.when);});
+  M.stays.forEach(function(s){b.push([s.lat,s.lng]);
+    var bg=s.top?'#c96f3f':'#9a9286';
+    L.marker([s.lat,s.lng],{zIndexOffset:s.top?1000:500,icon:L.divIcon({className:'',html:'<div class="pin" style="background:'+bg+'">'+s.n+'</div>',iconSize:[26,26],iconAnchor:[13,13]})})
+     .addTo(map).bindPopup('<b>'+s.n+'위 '+s.name+'</b><br>별점 '+s.ov+' · 1인 1박 '+s.pp.toLocaleString()+'원<br><a href="'+s.url+'" target="_blank" rel="noopener">구글 지도에서 보기</a>');});
+  map.fitBounds(b,{padding:[24,24]});
+})();
+document.querySelectorAll('a[href^="#s-"]').forEach(function(a){a.addEventListener('click',function(){var d=document.querySelector(a.getAttribute('href'));if(d&&d.tagName==='DETAILS')d.open=true;});});
+</script>
+</body></html>
